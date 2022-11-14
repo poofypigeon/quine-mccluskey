@@ -1,6 +1,8 @@
 package quinemccluskey
 
-import "sort"
+import (
+	"sort"
+)
 
 // bitCount returns the number of set bits in a v.
 func bitCount(v uint64) int {

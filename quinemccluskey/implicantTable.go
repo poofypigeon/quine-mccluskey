@@ -15,7 +15,7 @@ type implicantTable struct {
 // for the max number of possible set bits to be added.
 func (table *implicantTable) init() {
 	table.nOutputs = 0
-	table.columns = []implicantColumn{make([][]implicant, 0, 64)}
+	table.columns = []implicantColumn{make(implicantColumn, 0, 64)}
 }
 
 // addOutput takes a list of minterms and don't cares, and sorts them into
@@ -44,16 +44,23 @@ NEXT_TERM:
 		}
 
 		// if the implicant already exists, set its tag bit for this output
-		for i, im := range table.columns[0][setBits] {
-			if term == im.literals {
-				table.columns[0][setBits][i].tag |= 1 << table.nOutputs
+		for im := range table.columns[0][setBits] {
+			if im.literals == term {
+				newImplicant := im
+				delete(table.columns[0][setBits], im)
+				newImplicant.tag |= 1 << table.nOutputs
+				table.columns[0][setBits][newImplicant] = true
 				continue NEXT_TERM
 			}
 		}
 
+		if table.columns[0][setBits] == nil {
+			table.columns[0][setBits] = map[implicant]bool{}
+		}
+
 		// otherwise build and add an implicant with its tag bit set for this output
 		im := implicant{term, 0, (1 << table.nOutputs), false}
-		table.columns[0][setBits] = append(table.columns[0][setBits], im)
+		table.columns[0][setBits][im] = true
 	}
 
 	table.nOutputs++
@@ -67,8 +74,6 @@ NEXT_TERM:
 // can be made. After this process, the terms in each column that are still
 // unchecked are prime implicants, which are placed in a list and returned.
 func (table *implicantTable) reduce(implicantDisplayWidth int, mintermDisplayWidth int, printoutsEnabled bool) []implicant {
-	visualizeBanner("TABLE REDUCTION FOR PRIME IMPLICANTS", printoutsEnabled)
-
 	// iterate lists until no more combinations can be made
 	visualizeHeading("TABLE: 0", printoutsEnabled)
 	table.visualize(implicantDisplayWidth, printoutsEnabled)

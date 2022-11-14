@@ -1,6 +1,8 @@
 package quinemccluskey
 
 import (
+	"fmt"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -160,8 +162,10 @@ func (table *coverTable) getMinimumCostCover(implicantDisplayWidth int, mintermD
 		// pI is the first occurance from the set of primes with the fewest
 		// literals (most xMask bits) in pL
 		pI := table.primes[pLIndices[0]]
-		for _, index := range pLIndices[:1] {
+		for _, index := range pLIndices[1:] {
+			fmt.Println("checking", table.primes[index])
 			if bitCount(table.primes[index].xMask) > bitCount(pI.xMask) {
+				fmt.Println("picked")
 				pI = table.primes[index]
 			}
 		}

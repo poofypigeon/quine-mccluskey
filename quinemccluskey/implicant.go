@@ -1,6 +1,8 @@
 package quinemccluskey
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // implicant represents a cover of one or more minterms.
 type implicant struct {

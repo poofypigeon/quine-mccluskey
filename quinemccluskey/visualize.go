@@ -3,6 +3,7 @@ package quinemccluskey
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -85,24 +86,32 @@ func (table implicantTable) visualize(implicantDisplayWidth int, show bool) {
 	if show {
 		visualizeImplicantTableHeader(len(table.columns), implicantDisplayWidth, table.nOutputs)
 		for group := 0; group < len(table.columns[0]); group++ {
-			groupEntries := 0
-			for _, column := range table.columns {
-				if len(column) > group {
-					groupEntries = int(math.Max(float64(groupEntries), float64(len(column[group]))))
+			groupEntries := [][]implicant{}
+			nGroupEntries := 0
+			for k, column := range table.columns {
+				groupEntries = append(groupEntries, []implicant{})
+				if group < len(column) {
+					for entry := range column[group] {
+						groupEntries[k] = append(groupEntries[k], entry)
+					}
+					sort.Slice(groupEntries[k], func(i, j int) bool {
+						return (groupEntries[k][i].literals < groupEntries[k][j].literals) || (bitCount(groupEntries[k][i].xMask) < bitCount(groupEntries[k][j].xMask))
+					})
+					nGroupEntries = int(math.Max(float64(nGroupEntries), float64(len(column[group]))))
 				}
 			}
-			for entry := 0; entry < groupEntries; entry++ {
-				for _, column := range table.columns {
-					if len(column) > group {
-						if len(column[group]) > entry {
+			for entry := 0; entry < nGroupEntries; entry++ {
+				for i, column := range groupEntries {
+					if group < len(table.columns[i]) {
+						if entry < len(column) {
 							f := "| %s%s  %0" + strconv.FormatInt(int64(table.nOutputs), 10) + "b%s  %t   "
 							fmt.Printf(f,
-								column[group][entry].stringify(implicantDisplayWidth),
+								column[entry].stringify(implicantDisplayWidth),
 								strings.Repeat(" ", int(math.Max(0, float64(4-implicantDisplayWidth)))),
-								column[group][entry].tag,
+								column[entry].tag,
 								strings.Repeat(" ", int(math.Max(0, float64(4-table.nOutputs)))),
-								column[group][entry].checked)
-							if column[group][entry].checked {
+								column[entry].checked)
+							if column[entry].checked {
 								fmt.Printf(" ")
 							}
 						} else {
